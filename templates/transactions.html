@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Transactions{% endblock %}
+
+{% block content %}
+{% set filtering = filters.q or filters.product_id or filters.type or date_from or date_to %}
+<header class="page-header">
+  <div>
+    <h1>Transactions</h1>
+    <p>Every change to your stock, with the reason and the stock level afterwards.</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('export_transactions_csv', **{'from': '' if date_error else date_from, 'to': '' if date_error else date_to}) }}">{{ ui.icon('download', 18) }}Export CSV</a>
+  </div>
+</header>
+
+<section class="card" aria-label="Filter transactions">
+  {% if date_error %}<div class="form-error" role="alert">{{ ui.icon('alert', 20) }}<span>{{ date_error }} The date filter was ignored.</span></div>{% endif %}
+  <form class="filters" method="get" action="{{ url_for('transactions') }}">
+    <div class="field field-wide">
+      <label for="t-q">Search product, SKU or notes</label>
+      <input class="control" id="t-q" type="search" name="q" value="{{ filters.q }}" maxlength="100">
+    </div>
+    <div class="field">
+      <label for="t-product">Product</label>
+      <select class="control" id="t-product" name="product_id" data-autosubmit>
+        <option value="">All products</option>
+        {% for p in product_choices %}<option value="{{ p.id }}" {{ 'selected' if p.id == filters.product_id }}>{{ p.name }} ({{ p.sku }}){{ ' - archived' if p.is_archived }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="t-type">Type</label>
+      <select class="control" id="t-type" name="type" data-autosubmit>
+        <option value="">All types</option>
+        {% for key, label in TRANSACTION_LABELS.items() %}<option value="{{ key }}" {{ 'selected' if key == filters.type }}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="t-from">From date</label>
+      <input class="control" id="t-from" type="date" name="from" value="{{ date_from if not date_error else '' }}">
+    </div>
+    <div class="field">
+      <label for="t-to">To date</label>
+      <input class="control" id="t-to" type="date" name="to" value="{{ date_to if not date_error else '' }}">
+    </div>
+    <div class="filters-actions">
+      <button type="submit" class="btn btn-primary">{{ ui.icon('filter', 18) }}Apply</button>
+      <a class="btn btn-ghost" href="{{ url_for('transactions') }}">Clear</a>
+    </div>
+  </form>
+</section>
+
+<section class="card" aria-label="Transaction list">
+  {% if transactions %}
+  <div class="table-wrap"><table class="table table-stack">
+    <caption class="sr-only">Stock transactions, newest first</caption>
+    <thead><tr>
+      <th scope="col">When</th><th scope="col">Product</th><th scope="col">Type</th>
+      <th scope="col" class="num">Quantity</th><th scope="col" class="num">Unit price</th><th scope="col" class="num">Total</th>
+      <th scope="col" class="num">Stock after</th><th scope="col">Details</th>
+    </tr></thead>
+    <tbody>
+    {% for m in transactions %}
+      <tr>
+        <td data-label="When" class="nowrap">{{ m.created_at | localdt }}</td>
+        <td data-label="Product"><span><a class="cell-title" href="{{ url_for('product_detail', product_id=m.product_id) }}">{{ m.product_name }}</a><span class="cell-sub">SKU {{ m.product_sku }}{{ ' (archived)' if m.is_archived }}</span></span></td>
+        <td data-label="Type">{{ ui.type_badge(m.transaction_type) }}</td>
+        <td class="num" data-label="Quantity">{{ ui.signed_qty(m.transaction_type, m.quantity) }}</td>
+        <td class="num" data-label="Unit price">{{ m.unit_price | money }}</td>
+        <td class="num" data-label="Total">{{ m.total_amount | money }}</td>
+        <td class="num" data-label="Stock after">{{ m.stock_after }}</td>
+        <td data-label="Details">
+          {% if m.sale_id %}<a href="{{ url_for('receipt', sale_id=m.sale_id) }}">Receipt {{ m.receipt_number | receipt_no }}</a>
+          {% else %}{{ m.notes or '-' }}{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {{ ui.pagination(pagination) }}
+  {% elif filtering %}
+    {% call ui.empty_state('No transactions match these filters', 'Try widening the dates or clearing the search.', 'search') %}
+      <a class="btn btn-primary" href="{{ url_for('transactions') }}">Clear filters</a>
+    {% endcall %}
+  {% else %}
+    {% call ui.empty_state('No transactions yet', 'Adding a product with stock, restocking, adjusting and selling are all recorded here automatically.', 'history') %}
+      <a class="btn btn-primary" href="{{ url_for('product_new') }}">Add a product</a>
+    {% endcall %}
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}{{ 'Archived products' if filters.view == 'archived' else 'Products' }}{% endblock %}
+
+{% block content %}
+{% set filtering = filters.q or filters.category or filters.status != 'all' %}
+<header class="page-header">
+  <div>
+    <h1>{{ 'Archived products' if filters.view == 'archived' else 'Products' }}</h1>
+    <p>
+      {% if filters.view == 'archived' %}
+        Archived products are hidden from sales and the dashboard. Their history is kept, and you can restore them.
+      {% else %}
+        Search, filter and manage everything you sell.
+      {% endif %}
+    </p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('export_products_csv') }}">{{ ui.icon('download', 18) }}Export CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('product_new') }}">{{ ui.icon('plus', 18) }}Add product</a>
+  </div>
+</header>
+
+<section class="card" aria-label="Filter products">
+  <form class="filters" method="get" action="{{ url_for('products_list') }}">
+    <div class="field field-wide">
+      <label for="f-q">Search by name or SKU</label>
+      <input class="control" id="f-q" type="search" name="q" value="{{ filters.q }}" maxlength="100" placeholder="For example: notebook or NB-100">
+    </div>
+    <div class="field">
+      <label for="f-category">Category</label>
+      <select class="control" id="f-category" name="category" data-autosubmit>
+        <option value="">All categories</option>
+        {% for c in categories %}<option value="{{ c }}" {{ 'selected' if c|lower == filters.category|lower }}>{{ c }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-status">Stock level</label>
+      <select class="control" id="f-status" name="status" data-autosubmit>
+        {% for value, label in status_options %}<option value="{{ value }}" {{ 'selected' if value == filters.status }}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-sort">Sort by</label>
+      <select class="control" id="f-sort" name="sort" data-autosubmit>
+        {% for key, (label, _sql) in sort_options.items() %}<option value="{{ key }}" {{ 'selected' if key == filters.sort }}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-view">Show</label>
+      <select class="control" id="f-view" name="view" data-autosubmit>
+        <option value="active" {{ 'selected' if filters.view == 'active' }}>Active products</option>
+        <option value="archived" {{ 'selected' if filters.view == 'archived' }}>Archived products</option>
+      </select>
+    </div>
+    <div class="filters-actions">
+      <button type="submit" class="btn btn-primary">{{ ui.icon('filter', 18) }}Apply</button>
+      <a class="btn btn-ghost" href="{{ url_for('products_list') }}">Clear</a>
+    </div>
+  </form>
+</section>
+
+<section class="card" aria-label="Product list">
+  {% if products %}
+  <div class="table-wrap">
+    <table class="table table-stack">
+      <caption class="sr-only">Products</caption>
+      <thead>
+        <tr>
+          <th scope="col">Product</th>
+          <th scope="col">Category</th>
+          <th scope="col" class="num">Cost</th>
+          <th scope="col" class="num">Price</th>
+          <th scope="col">Stock</th>
+          <th scope="col"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in products %}
+        {% set status = p | stock_status %}
+        <tr>
+          <td data-label="Product">
+            <span><a class="cell-title" href="{{ url_for('product_detail', product_id=p.id) }}">{{ p.name }}</a><span class="cell-sub">SKU {{ p.sku }}</span></span>
+          </td>
+          <td data-label="Category">{{ p.category }}</td>
+          <td class="num" data-label="Cost">{{ p.cost_price | money }}</td>
+          <td class="num" data-label="Price">{{ p.selling_price | money }}</td>
+          <td data-label="Stock">
+            <div class="stock-cell">
+              <div class="stock-line">
+                <span class="qty">{{ p.quantity }}</span>
+                {% if p.is_archived %}<span class="badge badge-archived">{{ ui.icon('archive', 14) }}Archived</span>{% else %}{{ ui.stock_badge(status) }}{% endif %}
+              </div>
+              {% if not p.is_archived %}{{ ui.stock_meter(p.quantity, p.reorder_level, status) }}{% endif %}
+            </div>
+          </td>
+          <td>
+            <div class="row-actions">
+              <a class="btn btn-sm" href="{{ url_for('product_detail', product_id=p.id) }}">View<span class="sr-only"> {{ p.name }}</span></a>
+              {% if p.is_archived %}
+              <form class="inline-form" method="post" action="{{ url_for('product_restore', product_id=p.id) }}">
+                {{ ui.csrf() }}
+                <button type="submit" class="btn btn-sm">{{ ui.icon('restore', 16) }}Restore<span class="sr-only"> {{ p.name }}</span></button>
+              </form>
+              {% else %}
+              <a class="btn btn-sm" href="{{ url_for('product_edit', product_id=p.id) }}">{{ ui.icon('edit', 16) }}Edit<span class="sr-only"> {{ p.name }}</span></a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ ui.pagination(pagination) }}
+
+  {% elif filters.view == 'archived' and not filtering %}
+    {% call ui.empty_state('No archived products', 'When you archive a product it is listed here and can be restored at any time.', 'archive') %}
+      <a class="btn" href="{{ url_for('products_list') }}">Back to active products</a>
+    {% endcall %}
+  {% elif filtering or filters.view == 'archived' %}
+    {% call ui.empty_state('No products match these filters', 'Try a different search, or clear the filters to see everything.', 'search') %}
+      <a class="btn btn-primary" href="{{ url_for('products_list') }}">Clear filters</a>
+    {% endcall %}
+  {% else %}
+    {% call ui.empty_state('Your inventory is empty', 'Add your first product with its cost, price and opening stock. StockPilot will track every change from there.', 'package') %}
+      <a class="btn btn-primary" href="{{ url_for('product_new') }}">{{ ui.icon('plus', 18) }}Add your first product</a>
+    {% endcall %}
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Create account{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <a class="auth-brand" href="{{ url_for('login') }}">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" width="48" height="48" alt="">
+    <span class="wordmark">Stock<span>Pilot</span></span>
+  </a>
+  <section class="card auth-card" aria-labelledby="register-title">
+    <div>
+      <h1 id="register-title">Create your account</h1>
+      <p class="tagline">Each account gets its own private inventory.</p>
+    </div>
+
+    <form method="post" action="{{ url_for('register') }}" class="stack">
+      {{ ui.csrf() }}
+      {{ ui.field('full_name', 'Full name', value=form.full_name, error=errors.full_name, autocomplete='name', autofocus=true, maxlength=100) }}
+      {{ ui.field('business_name', 'Business name', value=form.business_name, error=errors.business_name, autocomplete='organization', maxlength=100) }}
+      {{ ui.field('email', 'Email address', value=form.email, error=errors.email, type='email', autocomplete='email', maxlength=254) }}
+      {{ ui.field('password', 'Password', value='', error=errors.password, type='password', autocomplete='new-password', minlength=8, maxlength=128,
+                  hint='At least 8 characters, with a letter and a number.') }}
+      {{ ui.field('confirm_password', 'Confirm password', value='', error=errors.confirm_password, type='password', autocomplete='new-password', minlength=8, maxlength=128) }}
+      <button type="submit" class="btn btn-primary btn-block">Create account</button>
+    </form>
+
+    <p class="auth-alt">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+  </section>
+</div>
+{% endblock %}

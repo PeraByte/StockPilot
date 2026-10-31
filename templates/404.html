@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block title %}Page not found{% endblock %}
+{% block content %}
+<section class="error-page card">
+  <p class="error-code" aria-hidden="true">404</p>
+  <h1>Page not found</h1>
+  <p>This page does not exist, or it belongs to another account. Check the address or head back to your dashboard.</p>
+  <div class="empty-actions">
+    {% if g.user %}
+    <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Go to dashboard</a>
+    <a class="btn" href="{{ url_for('products_list') }}">View products</a>
+    {% else %}
+    <a class="btn btn-primary" href="{{ url_for('login') }}">Go to log in</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

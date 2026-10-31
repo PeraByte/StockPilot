@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Receipt {{ sale.receipt_number | receipt_no }}{% endblock %}
+
+{% block breadcrumbs %}
+  {{ ui.breadcrumbs([('Sales history', url_for('sales_history')), ('Receipt ' ~ (sale.receipt_number | receipt_no), none)]) }}
+{% endblock %}
+
+{% block content %}
+<header class="page-header no-print">
+  <h1>Receipt {{ sale.receipt_number | receipt_no }}</h1>
+  <div class="actions">
+    <button type="button" class="btn btn-primary" data-print>{{ ui.icon('printer', 18) }}Print receipt</button>
+    <a class="btn" href="{{ url_for('pos') }}">{{ ui.icon('cart', 18) }}New sale</a>
+  </div>
+</header>
+
+<article class="card receipt" aria-label="Receipt">
+  <header class="receipt-head">
+    <h2>{{ g.user.business_name }}</h2>
+    <p>Receipt {{ sale.receipt_number | receipt_no }}</p>
+    <p class="muted">{{ sale.created_at | localdt }}</p>
+  </header>
+
+  <div class="table-wrap"><table class="table">
+    <caption class="sr-only">Items on this receipt</caption>
+    <thead><tr><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Price</th><th scope="col" class="num">Amount</th></tr></thead>
+    <tbody>
+    {% for item in items %}
+      <tr>
+        <td><span>{{ item.product_name_snapshot }}<span class="cell-sub">SKU {{ item.sku_snapshot }}</span></span></td>
+        <td class="num">{{ item.quantity }}</td>
+        <td class="num">{{ item.unit_price | money }}</td>
+        <td class="num">{{ item.line_total | money }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+
+  <p class="receipt-total"><span>Total</span><span>{{ sale.total_amount | money }}</span></p>
+  {% if sale.notes %}<p class="muted mt-m">Note: {{ sale.notes }}</p>{% endif %}
+  <footer class="receipt-foot"><p>Thank you for your purchase.</p></footer>
+</article>
+
+<section class="card receipt no-print" aria-labelledby="owner-title">
+  <h2 id="owner-title">Sale details (for you only)</h2>
+  <p class="muted small">This block is not part of the printed receipt.</p>
+  <dl class="detail-grid mt-m">
+    <div class="stat"><dt>Revenue</dt><dd>{{ sale.total_amount | money }}</dd></div>
+    <div class="stat"><dt>Cost of goods</dt><dd>{{ sale.total_cost | money }}</dd></div>
+    <div class="stat"><dt>Estimated gross profit</dt><dd>{{ sale.total_profit | money }}<small>Before expenses and tax</small></dd></div>
+  </dl>
+  <p class="footnote mt-m">Prices and costs are the values at the time of the sale, so this receipt does not change if you edit the product later.</p>
+</section>
+{% endblock %}

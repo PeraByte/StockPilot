@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+{% set totals = data.totals %}
+{% set inv = data.inventory %}
+<header class="page-header">
+  <div>
+    <h1>Reports</h1>
+    <p>Sales performance for a date range, plus what your stock is worth today.</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('export_products_csv') }}">{{ ui.icon('download', 18) }}Products CSV</a>
+    <a class="btn" href="{{ url_for('export_sales_csv', **{'from': date_from, 'to': date_to}) }}">{{ ui.icon('download', 18) }}Sales CSV</a>
+    <a class="btn" href="{{ url_for('export_transactions_csv', **{'from': date_from, 'to': date_to}) }}">{{ ui.icon('download', 18) }}Transactions CSV</a>
+  </div>
+</header>
+
+<section class="card" aria-label="Choose a date range">
+  {% if range_error %}<div class="form-error" role="alert">{{ ui.icon('alert', 20) }}<span>{{ range_error }}</span></div>{% endif %}
+  <form class="filters" method="get" action="{{ url_for('reports_page') }}">
+    <div class="field">
+      <label for="r-from">From date</label>
+      <input class="control" id="r-from" type="date" name="from" value="{{ date_from }}" required>
+    </div>
+    <div class="field">
+      <label for="r-to">To date</label>
+      <input class="control" id="r-to" type="date" name="to" value="{{ date_to }}" required>
+    </div>
+    <div class="filters-actions">
+      <button type="submit" class="btn btn-primary">{{ ui.icon('filter', 18) }}Show report</button>
+      <a class="btn btn-ghost" href="{{ url_for('reports_page') }}">Last 30 days</a>
+    </div>
+  </form>
+</section>
+
+<section class="kpis kpis-4" aria-label="Totals for the selected dates">
+  <div class="card kpi"><span class="kpi-icon good">{{ ui.icon('coins', 22) }}</span><div class="kpi-body"><p class="kpi-label">Sales revenue</p><p class="kpi-value">{{ totals.revenue | money }}</p></div></div>
+  <div class="card kpi"><span class="kpi-icon good">{{ ui.icon('trending', 22) }}</span><div class="kpi-body"><p class="kpi-label">Estimated gross profit</p><p class="kpi-value">{{ totals.profit | money }}</p><p class="kpi-note">Before expenses and tax</p></div></div>
+  <div class="card kpi"><span class="kpi-icon">{{ ui.icon('receipt', 22) }}</span><div class="kpi-body"><p class="kpi-label">Number of sales</p><p class="kpi-value">{{ totals.sales_count }}</p></div></div>
+  <div class="card kpi"><span class="kpi-icon">{{ ui.icon('layers', 22) }}</span><div class="kpi-body"><p class="kpi-label">Units sold</p><p class="kpi-value">{{ '{:,}'.format(totals.units) }}</p></div></div>
+</section>
+
+<section class="card" aria-labelledby="daily-title">
+  <div class="card-head">
+    <h2 id="daily-title">Revenue and gross profit by day</h2>
+    <p>{{ date_from }} to {{ date_to }}</p>
+  </div>
+  {% if charts.daily.has_data %}
+    <div class="legend" aria-hidden="true">
+      <span><i class="swatch"></i>Revenue</span>
+      <span><i class="swatch profit"></i>Estimated gross profit</span>
+    </div>
+    <div class="chart-box" id="chart-daily" data-fallback="table"><canvas role="img" aria-label="Line chart of revenue and estimated gross profit for each day in the selected range. The same numbers are in the table below."></canvas></div>
+    <div class="table-wrap mt-l"><table class="table table-stack">
+      <caption class="sr-only">Daily sales figures</caption>
+      <thead><tr><th scope="col">Day</th><th scope="col" class="num">Sales</th><th scope="col" class="num">Units sold</th><th scope="col" class="num">Revenue</th><th scope="col" class="num">Est. gross profit</th></tr></thead>
+      <tbody>
+      {% for day in data.daily %}
+        <tr>
+          <td data-label="Day">{{ day.date.strftime('%a %d %b %Y') }}</td>
+          <td class="num" data-label="Sales">{{ day.sales_count }}</td>
+          <td class="num" data-label="Units sold">{{ day.units }}</td>
+          <td class="num" data-label="Revenue">{{ day.revenue | money }}</td>
+          <td class="num" data-label="Est. gross profit">{{ day.profit | money }}</td>
+        </tr>
+      {% endfor %}
+        <tr class="total-row">
+          <td data-label="Day">Total</td>
+          <td class="num" data-label="Sales">{{ totals.sales_count }}</td>
+          <td class="num" data-label="Units sold">{{ totals.units }}</td>
+          <td class="num" data-label="Revenue">{{ totals.revenue | money }}</td>
+          <td class="num" data-label="Est. gross profit">{{ totals.profit | money }}</td>
+        </tr>
+      </tbody>
+    </table></div>
+  {% else %}
+    {% call ui.empty_state('No sales in this date range', 'Pick different dates, or record a sale to see daily figures here.', 'chart') %}
+      <a class="btn btn-primary" href="{{ url_for('pos') }}">Record a sale</a>
+    {% endcall %}
+  {% endif %}
+</section>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="sellers-title">
+    <div class="card-head"><h2 id="sellers-title">Best-selling products</h2><p>By units sold in this range</p></div>
+    {% if data.best_sellers %}
+      <div class="chart-box" id="chart-sellers"><canvas role="img" aria-label="Bar chart of units sold for your best-selling products in the selected range. The same numbers are in the table below."></canvas></div>
+      <div class="table-wrap mt-l"><table class="table table-stack">
+        <caption class="sr-only">Best-selling products</caption>
+        <thead><tr><th scope="col">Product</th><th scope="col" class="num">Units</th><th scope="col" class="num">Revenue</th><th scope="col" class="num">Est. gross profit</th></tr></thead>
+        <tbody>
+        {% for row in data.best_sellers %}
+          <tr>
+            <td data-label="Product"><a class="cell-title" href="{{ url_for('product_detail', product_id=row.product_id) }}">{{ row.name }}</a></td>
+            <td class="num" data-label="Units">{{ row.units }}</td>
+            <td class="num" data-label="Revenue">{{ row.revenue | money }}</td>
+            <td class="num" data-label="Est. gross profit">{{ row.profit | money }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    {% else %}
+      {% call ui.empty_state('Nothing sold in this range', 'Best sellers appear once sales have been recorded in the selected dates.', 'package') %}{% endcall %}
+    {% endif %}
+  </section>
+
+  <section class="card" aria-labelledby="valuation-title">
+    <div class="card-head"><h2 id="valuation-title">Inventory valuation</h2><p>Current stock, active products</p></div>
+    {% if inv.active_products %}
+    <dl class="detail-grid">
+      <div class="stat"><dt>Value at cost price</dt><dd>{{ inv.cost_value | money }}<small>What the stock cost you</small></dd></div>
+      <div class="stat"><dt>Potential retail value</dt><dd>{{ inv.retail_value | money }}<small>If all of it sold at today's prices</small></dd></div>
+      <div class="stat"><dt>Potential gross margin</dt><dd>{{ (inv.retail_value - inv.cost_value) | money }}<small>Retail value minus cost</small></dd></div>
+      <div class="stat"><dt>Units in stock</dt><dd>{{ '{:,}'.format(inv.total_units) }}<small>Across {{ inv.active_products }} products</small></dd></div>
+    </dl>
+    <p class="footnote mt-m">These are estimates based on the prices set on your products today. They do not account for discounts, spoilage or unsold stock.</p>
+    {% else %}
+      {% call ui.empty_state('No products to value', 'Add products with stock to see what your inventory is worth.', 'coins') %}
+        <a class="btn btn-primary" href="{{ url_for('product_new') }}">Add a product</a>
+      {% endcall %}
+    {% endif %}
+  </section>
+</div>
+
+<section class="card" aria-labelledby="low-title">
+  <div class="card-head"><h2 id="low-title">Low-stock report</h2><p>Products at or below their threshold, as of now</p></div>
+  {% if data.low_stock %}
+  <div class="table-wrap"><table class="table table-stack">
+    <caption class="sr-only">Products that need restocking</caption>
+    <thead><tr><th scope="col">Product</th><th scope="col">Category</th><th scope="col">Stock</th><th scope="col" class="num">Threshold</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead>
+    <tbody>
+    {% for p in data.low_stock %}
+      {% set status = p | stock_status %}
+      <tr>
+        <td data-label="Product"><span><a class="cell-title" href="{{ url_for('product_detail', product_id=p.id) }}">{{ p.name }}</a><span class="cell-sub">SKU {{ p.sku }}</span></span></td>
+        <td data-label="Category">{{ p.category }}</td>
+        <td data-label="Stock"><div class="stock-cell"><div class="stock-line"><span class="qty">{{ p.quantity }}</span>{{ ui.stock_badge(status) }}</div>{{ ui.stock_meter(p.quantity, p.reorder_level, status) }}</div></td>
+        <td class="num" data-label="Threshold">{{ p.reorder_level }}</td>
+        <td><div class="row-actions"><a class="btn btn-sm" href="{{ url_for('product_detail', product_id=p.id) }}#stock">Restock<span class="sr-only"> {{ p.name }}</span></a></div></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+    {% call ui.empty_state('Nothing needs restocking', 'No active product is at or below its low-stock threshold.', 'shield') %}{% endcall %}
+  {% endif %}
+</section>
+
+<script type="application/json" id="chart-data">{{ charts | tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script src="{{ url_for('static', filename='js/reports.js') }}" defer></script>
+{% endblock %}

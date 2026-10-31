@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="error-page card">
+  <p class="error-code" aria-hidden="true">{{ code }}</p>
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+  <div class="empty-actions">
+    {% if g.user %}
+    <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Go to dashboard</a>
+    {% else %}
+    <a class="btn btn-primary" href="{{ url_for('login') }}">Go to log in</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

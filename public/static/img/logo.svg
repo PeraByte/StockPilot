@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="StockPilot logo">
+  <rect width="64" height="64" rx="16" fill="#3049c9"/>
+  <!-- An open shipping box (stock) ... -->
+  <path d="M32 21 L50 31 V47 L32 57 L14 47 V31 Z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M14 31 L32 41 L50 31 M32 41 V57" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- ... with an arrow rising out of it (control / direction). -->
+  <path d="M32 33 V8 M22 17 L32 7 L42 17" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

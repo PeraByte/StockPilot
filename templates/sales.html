@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Point of sale{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Point of sale</h1>
+    <p>Find products, build the sale, and complete it. Stock is deducted and a receipt is created when you confirm.</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('sales_history') }}">{{ ui.icon('receipt', 18) }}Sales history</a>
+  </div>
+</header>
+
+<section class="card" id="sale-success" tabindex="-1" aria-live="polite" hidden></section>
+
+<div class="pos">
+  <section class="card" aria-labelledby="catalog-title">
+    <h2 id="catalog-title">Products</h2>
+    <label class="sr-only" for="pos-search">Search products by name or SKU</label>
+    <div class="pos-search">
+      {{ ui.icon('search', 18) }}
+      <input id="pos-search" type="search" placeholder="Search by name or SKU" autocomplete="off" maxlength="100">
+    </div>
+    <p class="muted small mt-m" id="pos-status" role="status">Loading products&hellip;</p>
+    <div class="product-grid" id="pos-results"></div>
+    <p class="footnote mt-m">Only products that are in stock are shown here. Out-of-stock and archived products cannot be sold.</p>
+  </section>
+
+  <section class="card pos-cart" aria-labelledby="cart-title">
+    <h2 id="cart-title">Current sale</h2>
+    <div id="cart-empty">
+      {% call ui.empty_state('The cart is empty', 'Select a product on the left to add it.', 'cart') %}{% endcall %}
+    </div>
+    <ul class="cart-lines" id="cart-lines" aria-label="Items in the current sale" hidden></ul>
+
+    <dl class="cart-totals">
+      <div><dt>Items</dt><dd id="cart-units">0</dd></div>
+      <div><dt>Subtotal</dt><dd id="cart-subtotal">{{ 0 | money }}</dd></div>
+      <div class="grand"><dt>Total</dt><dd id="cart-total">{{ 0 | money }}</dd></div>
+    </dl>
+
+    <div class="field mt-m">
+      <label for="sale-notes">Note <span class="optional">(optional)</span></label>
+      <input class="control" id="sale-notes" type="text" maxlength="200" autocomplete="off">
+    </div>
+
+    <div class="cart-actions">
+      <button type="button" class="btn" id="clear-cart" disabled>Clear cart</button>
+      <button type="button" class="btn btn-primary" id="checkout-button" disabled>{{ ui.icon('check', 18) }}Complete sale</button>
+    </div>
+    <p class="footnote mt-m">StockPilot records the sale and updates your stock. It does not take card or online payments.</p>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/sales.js') }}" defer></script>
+{% endblock %}

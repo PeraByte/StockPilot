@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Settings</h1>
+    <p>Your profile, the currency label shown on screen, and your password.</p>
+  </div>
+</header>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="profile-title">
+    <h2 id="profile-title">Profile and display</h2>
+    <form method="post" action="{{ url_for('settings_profile') }}" class="stack mt-m">
+      {{ ui.csrf() }}
+      {% if profile_errors %}
+      <div class="form-error" role="alert">{{ ui.icon('alert', 20) }}<span>Please fix the highlighted fields.</span></div>
+      {% endif %}
+      {{ ui.field('full_name', 'Full name', value=form.full_name, error=profile_errors.full_name, autocomplete='name', maxlength=100) }}
+      {{ ui.field('business_name', 'Business name', value=form.business_name, error=profile_errors.business_name, autocomplete='organization', maxlength=100) }}
+      <div class="field">
+        <label for="email-readonly">Email address</label>
+        <input class="control" id="email-readonly" type="email" value="{{ g.user.email }}" readonly>
+        <p class="hint">Your email is your login and cannot be changed here.</p>
+      </div>
+      {{ ui.field('currency_label', 'Currency label', value=form.currency_label, error=profile_errors.currency_label, maxlength=8, autocomplete='off',
+                  hint='Shown next to every amount, for example PKR, Rs or $. Changing it does not convert any amounts: past sales keep their numbers.') }}
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{{ ui.icon('check', 18) }}Save settings</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="password-title">
+    <h2 id="password-title">Change password</h2>
+    <form method="post" action="{{ url_for('settings_password') }}" class="stack mt-m">
+      {{ ui.csrf() }}
+      {% if password_errors %}
+      <div class="form-error" role="alert">{{ ui.icon('alert', 20) }}<span>Your password was not changed. Please fix the highlighted fields.</span></div>
+      {% endif %}
+      {{ ui.field('current_password', 'Current password', value='', error=password_errors.current_password, type='password', autocomplete='current-password') }}
+      {{ ui.field('new_password', 'New password', value='', error=password_errors.new_password, type='password', autocomplete='new-password', minlength=8, maxlength=128,
+                  hint='At least 8 characters, with a letter and a number.') }}
+      {{ ui.field('confirm_password', 'Confirm new password', value='', error=password_errors.confirm_password, type='password', autocomplete='new-password', minlength=8, maxlength=128) }}
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{{ ui.icon('shield', 18) }}Change password</button>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

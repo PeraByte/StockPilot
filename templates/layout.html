@@ -1,0 +1,129 @@
+{% import "_macros.html" as ui -%}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}StockPilot{% endblock %} &middot; StockPilot</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="{{ 'app' if g.user else 'auth' }}" data-currency="{{ currency() }}">
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  {% if g.user %}
+  {# Each item: endpoint, label, icon, endpoints that should highlight it #}
+  {% set nav_items = [
+    ('dashboard', 'Dashboard', 'grid', ['dashboard']),
+    ('products_list', 'Products', 'package', ['products_list', 'product_detail', 'product_edit']),
+    ('product_new', 'New product', 'plus', ['product_new']),
+    ('pos', 'Point of sale', 'cart', ['pos']),
+    ('sales_history', 'Sales history', 'receipt', ['sales_history', 'receipt']),
+    ('transactions', 'Transactions', 'history', ['transactions']),
+    ('reports_page', 'Reports', 'chart', ['reports_page']),
+    ('settings', 'Settings', 'sliders', ['settings']),
+  ] %}
+
+  <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+    <div class="sidebar-head">
+      <a class="brand" href="{{ url_for('dashboard') }}">
+        <img src="{{ url_for('static', filename='img/logo.svg') }}" width="40" height="40" alt="">
+        <span class="wordmark nav-label">Stock<span>Pilot</span></span>
+      </a>
+      <button type="button" class="icon-btn sidebar-collapse" id="sidebar-collapse" aria-label="Collapse sidebar" aria-pressed="false">
+        {{ ui.icon('chevrons-left', 18) }}
+      </button>
+    </div>
+
+    <nav class="nav" aria-label="Main">
+      <ul>
+        {% for endpoint, label, icon_name, active_on in nav_items %}
+        <li>
+          <a class="nav-link{% if request.endpoint in active_on %} is-active{% endif %}" href="{{ url_for(endpoint) }}"
+             {%- if request.endpoint in active_on %} aria-current="page"{% endif %} title="{{ label }}">
+            {{ ui.icon(icon_name, 20) }}<span class="nav-label">{{ label }}</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <div class="sidebar-foot">
+      <form method="post" action="{{ url_for('logout') }}">
+        {{ ui.csrf() }}
+        <button type="submit" class="nav-link nav-button" title="Log out">
+          {{ ui.icon('logout', 20) }}<span class="nav-label">Log out</span>
+        </button>
+      </form>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+
+  <div class="shell">
+    <header class="topbar">
+      <button type="button" class="icon-btn menu-toggle" id="menu-toggle" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+        {{ ui.icon('menu', 20) }}
+      </button>
+
+      <form class="global-search" role="search" method="get" action="{{ url_for('products_list') }}">
+        <label class="sr-only" for="global-search-input">Search products by name or SKU</label>
+        {{ ui.icon('search', 18) }}
+        <input id="global-search-input" type="search" name="q" placeholder="Search products by name or SKU" maxlength="100" autocomplete="off">
+      </form>
+
+      <div class="profile" id="profile">
+        <button type="button" class="profile-button" id="profile-button" aria-expanded="false" aria-controls="profile-menu">
+          <span class="avatar" aria-hidden="true">{{ g.user.full_name[:1] | upper }}</span>
+          <span class="profile-name">{{ g.user.full_name }}</span>
+          {{ ui.icon('chevron-down', 16) }}
+        </button>
+        <div class="profile-menu" id="profile-menu" hidden>
+          <p class="profile-who"><strong>{{ g.user.full_name }}</strong><span>{{ g.user.business_name }}</span><span>{{ g.user.email }}</span></p>
+          <a class="menu-item" href="{{ url_for('settings') }}">{{ ui.icon('sliders', 18) }}Settings</a>
+          <form method="post" action="{{ url_for('logout') }}">
+            {{ ui.csrf() }}
+            <button type="submit" class="menu-item">{{ ui.icon('logout', 18) }}Log out</button>
+          </form>
+        </div>
+      </div>
+    </header>
+  {% endif %}
+
+    <main id="main" class="main" tabindex="-1">
+      {# Flash messages: shown as toasts by app.js; without JavaScript they stay visible as banners. #}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <ul class="flash-list" data-flash-source>
+        {% for category, message in messages %}
+        <li class="flash flash-{{ category }}" data-category="{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% endwith %}
+
+      {% block breadcrumbs %}{% endblock %}
+      {% block content %}{% endblock %}
+    </main>
+
+  {% if g.user %}
+  </div>
+  {% endif %}
+
+  <div class="toast-region" id="toast-region" role="region" aria-label="Notifications"></div>
+
+  <dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <form method="dialog">
+      <h2 id="confirm-title">Are you sure?</h2>
+      <p id="confirm-message"></p>
+      <div class="dialog-actions">
+        <button type="submit" value="cancel" class="btn" id="confirm-cancel">Cancel</button>
+        <button type="submit" value="confirm" class="btn btn-danger" id="confirm-accept">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

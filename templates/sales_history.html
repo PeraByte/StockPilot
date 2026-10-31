@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Sales history{% endblock %}
+
+{% block content %}
+{% set filtering = query or date_from or date_to %}
+<header class="page-header">
+  <div>
+    <h1>Sales history</h1>
+    <p>Every completed sale. Open one to see or print its receipt.</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('export_sales_csv', **{'from': '' if date_error else date_from, 'to': '' if date_error else date_to}) }}">{{ ui.icon('download', 18) }}Export CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('pos') }}">{{ ui.icon('cart', 18) }}New sale</a>
+  </div>
+</header>
+
+<section class="card" aria-label="Filter sales">
+  {% if date_error %}<div class="form-error" role="alert">{{ ui.icon('alert', 20) }}<span>{{ date_error }} The date filter was ignored.</span></div>{% endif %}
+  <form class="filters" method="get" action="{{ url_for('sales_history') }}">
+    <div class="field field-wide">
+      <label for="s-q">Search receipt, product, SKU or note</label>
+      <input class="control" id="s-q" type="search" name="q" value="{{ query }}" maxlength="100">
+    </div>
+    <div class="field">
+      <label for="s-from">From date</label>
+      <input class="control" id="s-from" type="date" name="from" value="{{ date_from if not date_error else '' }}">
+    </div>
+    <div class="field">
+      <label for="s-to">To date</label>
+      <input class="control" id="s-to" type="date" name="to" value="{{ date_to if not date_error else '' }}">
+    </div>
+    <div class="filters-actions">
+      <button type="submit" class="btn btn-primary">{{ ui.icon('filter', 18) }}Apply</button>
+      <a class="btn btn-ghost" href="{{ url_for('sales_history') }}">Clear</a>
+    </div>
+  </form>
+</section>
+
+<section class="card" aria-label="Sales list">
+  {% if sales %}
+  <div class="table-wrap"><table class="table table-stack">
+    <caption class="sr-only">Sales, newest first</caption>
+    <thead><tr>
+      <th scope="col">Receipt</th><th scope="col">When</th><th scope="col" class="num">Units</th>
+      <th scope="col" class="num">Total</th><th scope="col" class="num">Est. gross profit</th><th scope="col">Note</th>
+    </tr></thead>
+    <tbody>
+    {% for s in sales %}
+      <tr>
+        <td data-label="Receipt"><a class="cell-title" href="{{ url_for('receipt', sale_id=s.id) }}">{{ s.receipt_number | receipt_no }}</a></td>
+        <td data-label="When" class="nowrap">{{ s.created_at | localdt }}</td>
+        <td class="num" data-label="Units">{{ s.units }}</td>
+        <td class="num" data-label="Total">{{ s.total_amount | money }}</td>
+        <td class="num" data-label="Est. gross profit">{{ s.total_profit | money }}</td>
+        <td data-label="Note">{{ s.notes or '-' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {{ ui.pagination(pagination) }}
+  {% elif filtering %}
+    {% call ui.empty_state('No sales match these filters', 'Try different dates or clear the search.', 'search') %}
+      <a class="btn btn-primary" href="{{ url_for('sales_history') }}">Clear filters</a>
+    {% endcall %}
+  {% else %}
+    {% call ui.empty_state('No sales yet', 'Completed sales will be listed here with a receipt for each one.', 'receipt') %}
+      <a class="btn btn-primary" href="{{ url_for('pos') }}">Record a sale</a>
+    {% endcall %}
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% set editing = product is not none %}
+{% block title %}{{ 'Edit ' ~ product.name if editing else 'New product' }}{% endblock %}
+
+{% block breadcrumbs %}
+  {% if editing %}
+    {{ ui.breadcrumbs([('Products', url_for('products_list')), (product.name, url_for('product_detail', product_id=product.id)), ('Edit', none)]) }}
+  {% else %}
+    {{ ui.breadcrumbs([('Products', url_for('products_list')), ('New product', none)]) }}
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ 'Edit product' if editing else 'New product' }}</h1>
+    <p>{{ 'Update details and prices. Stock changes are recorded separately so the history stays accurate.' if editing else 'Enter prices in whole currency units, for example 125 or 125.50.' }}</p>
+  </div>
+</header>
+
+<form class="card" method="post" action="{{ url_for('product_edit', product_id=product.id) if editing else url_for('product_new') }}" data-product-form>
+  {{ ui.csrf() }}
+  {% if errors %}
+  <div class="form-error" role="alert">{{ ui.icon('alert', 20) }}<span>Please fix the {{ errors | length }} highlighted field{{ '' if errors | length == 1 else 's' }} and try again.</span></div>
+  {% endif %}
+
+  <div class="form-grid">
+    <div class="span-2">
+      {{ ui.field('name', 'Product name', value=form.name, error=errors.name, maxlength=120, autofocus=true) }}
+    </div>
+    {{ ui.field('sku', 'SKU (your unique product code)', value=form.sku, error=errors.sku, maxlength=40, autocomplete='off',
+                hint='Letters, numbers, dots, dashes and slashes. Saved in capitals. Must be unique in your inventory.') }}
+
+    <div class="field{% if errors.category %} has-error{% endif %}">
+      <label for="category">Category <span class="optional">(optional)</span></label>
+      <input class="control" id="category" name="category" type="text" value="{{ form.category }}" maxlength="60" list="category-list" autocomplete="off"
+             {%- if errors.category %} aria-invalid="true" aria-describedby="category-error"{% endif %}>
+      <datalist id="category-list">{% for c in categories %}<option value="{{ c }}">{% endfor %}</datalist>
+      <p class="hint">Pick an existing category or type a new one.</p>
+      {% if errors.category %}<p class="error-text" id="category-error">{{ ui.icon('alert', 16) }}<span>{{ errors.category }}</span></p>{% endif %}
+    </div>
+
+    <div class="field span-2{% if errors.description %} has-error{% endif %}">
+      <label for="description">Description <span class="optional">(optional)</span></label>
+      <textarea class="control" id="description" name="description" maxlength="500" rows="3"
+                {%- if errors.description %} aria-invalid="true" aria-describedby="description-error"{% endif %}>{{ form.description }}</textarea>
+      {% if errors.description %}<p class="error-text" id="description-error">{{ ui.icon('alert', 16) }}<span>{{ errors.description }}</span></p>{% endif %}
+    </div>
+
+    {{ ui.field('cost_price', 'Cost price (what you pay) per unit', value=form.cost_price, error=errors.cost_price, inputmode='decimal',
+                pattern='[0-9,]+([.][0-9]{1,2})?', title='Use a number such as 125 or 125.50', hint='In ' ~ currency() ~ '. Cannot be negative.') }}
+    {{ ui.field('selling_price', 'Selling price per unit', value=form.selling_price, error=errors.selling_price, inputmode='decimal',
+                pattern='[0-9,]+([.][0-9]{1,2})?', title='Use a number such as 125 or 125.50', hint='In ' ~ currency() ~ '. Cannot be negative.') }}
+
+    <div class="span-2"><p class="margin-preview" id="margin-preview" aria-live="polite">Enter both prices to see your profit per unit.</p></div>
+
+    {% if editing %}
+      <div class="field">
+        <span class="field-label">Current stock</span>
+        <p class="control" aria-readonly="true">{{ product.quantity }} units</p>
+        <p class="hint">Change stock from the product page with <a href="{{ url_for('product_detail', product_id=product.id) }}#stock">Update stock</a>, so the change is recorded.</p>
+      </div>
+    {% else %}
+      {{ ui.field('quantity', 'Initial quantity', value=form.quantity, error=errors.quantity, inputmode='numeric', pattern='[0-9]+', optional=true,
+                  hint='Units you have now. Recorded in the history as opening stock.') }}
+    {% endif %}
+    {{ ui.field('reorder_level', 'Low-stock threshold', value=form.reorder_level, error=errors.reorder_level, inputmode='numeric', pattern='[0-9]+',
+                hint='You will see a low-stock warning when quantity is at or below this number.') }}
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{{ ui.icon('check', 18) }}{{ 'Save changes' if editing else 'Add product' }}</button>
+    <a class="btn" href="{{ url_for('product_detail', product_id=product.id) if editing else url_for('products_list') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/products.js') }}" defer></script>
+{% endblock %}

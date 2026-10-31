@@ -1,0 +1,148 @@
+{# Reusable template pieces. Import in a page with:
+   {% import "_macros.html" as ui %}  and call them as  {{ ui.icon('plus') }} #}
+
+{# --- Inline SVG icons (simple stroke icons, no external library needed) --- #}
+{% macro icon(name, size=20) -%}
+<svg class="icon" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+{%- if name == 'grid' %}<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+{%- elif name == 'package' %}<path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3.3 8L12 13l8.7-5"/><path d="M12 22V13"/>
+{%- elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
+{%- elif name == 'minus' %}<path d="M5 12h14"/>
+{%- elif name == 'cart' %}<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L21 8H6"/>
+{%- elif name == 'list' %}<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+{%- elif name == 'history' %}<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>
+{%- elif name == 'chart' %}<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>
+{%- elif name == 'sliders' %}<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>
+{%- elif name == 'logout' %}<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>
+{%- elif name == 'search' %}<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+{%- elif name == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>
+{%- elif name == 'chevrons-left' %}<path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/>
+{%- elif name == 'chevron-down' %}<path d="M6 9l6 6 6-6"/>
+{%- elif name == 'chevron-left' %}<path d="M15 6l-6 6 6 6"/>
+{%- elif name == 'chevron-right' %}<path d="M9 6l6 6-6 6"/>
+{%- elif name == 'alert' %}<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>
+{%- elif name == 'check' %}<path d="M5 12.5l4.5 4.5L19 7.5"/>
+{%- elif name == 'check-circle' %}<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>
+{%- elif name == 'x' %}<path d="M18 6L6 18M6 6l12 12"/>
+{%- elif name == 'info' %}<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/>
+{%- elif name == 'edit' %}<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+{%- elif name == 'archive' %}<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/>
+{%- elif name == 'restore' %}<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>
+{%- elif name == 'download' %}<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+{%- elif name == 'printer' %}<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/>
+{%- elif name == 'user' %}<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>
+{%- elif name == 'trending' %}<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>
+{%- elif name == 'coins' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/>
+{%- elif name == 'layers' %}<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>
+{%- elif name == 'ban' %}<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>
+{%- elif name == 'arrow-up' %}<path d="M12 19V5M6 11l6-6 6 6"/>
+{%- elif name == 'arrow-down' %}<path d="M12 5v14M6 13l6 6 6-6"/>
+{%- elif name == 'receipt' %}<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/>
+{%- elif name == 'filter' %}<path d="M3 5h18l-7 8v6l-4-2v-4L3 5z"/>
+{%- elif name == 'shield' %}<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>
+{%- endif %}
+</svg>
+{%- endmacro %}
+
+{# --- Hidden CSRF token for every POST form --- #}
+{% macro csrf() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{# --- A labelled text input with hint and error message --- #}
+{% macro field(name, label, value='', error=none, type='text', optional=false, hint=none, autocomplete=none,
+               inputmode=none, pattern=none, minlength=none, maxlength=none, min=none, max=none, list=none, autofocus=false,
+               id=none, title=none, placeholder=none, readonly=false) %}
+{% set fid = id or name %}
+<div class="field{% if error %} has-error{% endif %}">
+  <label for="{{ fid }}">{{ label }}{% if optional %} <span class="optional">(optional)</span>{% endif %}</label>
+  <input class="control" id="{{ fid }}" name="{{ name }}" type="{{ type }}" value="{{ value }}"
+         {%- if not optional %} required{% endif %}
+         {%- if autocomplete %} autocomplete="{{ autocomplete }}"{% endif %}
+         {%- if inputmode %} inputmode="{{ inputmode }}"{% endif %}
+         {%- if pattern %} pattern="{{ pattern }}"{% endif %}
+         {%- if minlength %} minlength="{{ minlength }}"{% endif %}
+         {%- if maxlength %} maxlength="{{ maxlength }}"{% endif %}
+         {%- if min is not none %} min="{{ min }}"{% endif %}
+         {%- if max is not none %} max="{{ max }}"{% endif %}
+         {%- if list %} list="{{ list }}"{% endif %}
+         {%- if autofocus %} autofocus{% endif %}
+         {%- if title %} title="{{ title }}"{% endif %}
+         {%- if placeholder %} placeholder="{{ placeholder }}"{% endif %}
+         {%- if readonly %} readonly{% endif %}
+         {%- if error %} aria-invalid="true"{% endif %}
+         {%- if hint or error %} aria-describedby="{% if hint %}{{ fid }}-hint{% endif %}{% if hint and error %} {% endif %}{% if error %}{{ fid }}-error{% endif %}"{% endif %}>
+  {% if hint %}<p class="hint" id="{{ fid }}-hint">{{ hint }}</p>{% endif %}
+  {% if error %}<p class="error-text" id="{{ fid }}-error">{{ icon('alert', 16) }}<span>{{ error }}</span></p>{% endif %}
+</div>
+{% endmacro %}
+
+{# --- Stock status badge: icon + words, never colour alone --- #}
+{% macro stock_badge(status) -%}
+{%- if status == 'out' %}<span class="badge badge-out">{{ icon('ban', 14) }}Out of stock</span>
+{%- elif status == 'low' %}<span class="badge badge-low">{{ icon('alert', 14) }}Low stock</span>
+{%- else %}<span class="badge badge-ok">{{ icon('check', 14) }}In stock</span>{% endif -%}
+{%- endmacro %}
+
+{# --- Recessed stock gauge. The full bar equals 3x the low-stock threshold. --- #}
+{% macro stock_meter(quantity, reorder_level, status) -%}
+{% set top = [quantity, reorder_level * 3, 1] | max %}
+<progress class="meter meter-{{ status }}" value="{{ quantity }}" max="{{ top }}" aria-label="Stock level: {{ quantity }} units; low-stock threshold {{ reorder_level }}">{{ quantity }}</progress>
+{%- endmacro %}
+
+{# --- Transaction type badge --- #}
+{% macro type_badge(transaction_type) -%}
+<span class="badge badge-type">
+{%- if transaction_type == 'SALE' %}{{ icon('cart', 14) }}
+{%- elif transaction_type == 'RESTOCK' %}{{ icon('package', 14) }}
+{%- elif transaction_type == 'ADJUSTMENT_IN' %}{{ icon('arrow-up', 14) }}
+{%- else %}{{ icon('arrow-down', 14) }}{% endif -%}
+{{ TRANSACTION_LABELS[transaction_type] }}</span>
+{%- endmacro %}
+
+{# --- Quantity with an explicit sign: +5 for stock in, minus 3 for stock out --- #}
+{% macro signed_qty(transaction_type, quantity) -%}
+{%- if transaction_type in INCREASE_TYPES %}<span class="qty-in">+{{ quantity }}</span>{% else %}<span class="qty-out">&minus;{{ quantity }}</span>{% endif -%}
+{%- endmacro %}
+
+{# --- Page links for lists. Uses the page_url() helper registered in app.py. --- #}
+{% macro pagination(pg) %}
+{% if pg.total %}
+<nav class="pagination" aria-label="Pagination">
+  <p class="muted">Showing {{ pg.first }}&ndash;{{ pg.last }} of {{ pg.total }}</p>
+  {% if pg.pages > 1 %}
+  <ul>
+    <li>{% if pg.page > 1 %}<a class="page-link" href="{{ page_url(pg.page - 1) }}" rel="prev" aria-label="Previous page">{{ icon('chevron-left', 16) }}</a>{% else %}<span class="page-link is-disabled" aria-hidden="true">{{ icon('chevron-left', 16) }}</span>{% endif %}</li>
+    {% for n in range(1, pg.pages + 1) %}
+      {% if n == 1 or n == pg.pages or (n - pg.page)|abs <= 1 %}
+        <li>{% if n == pg.page %}<span class="page-link is-current" aria-current="page"><span class="sr-only">Page </span>{{ n }}</span>{% else %}<a class="page-link" href="{{ page_url(n) }}"><span class="sr-only">Page </span>{{ n }}</a>{% endif %}</li>
+      {% elif (n - pg.page)|abs == 2 %}
+        <li><span class="page-gap" aria-hidden="true">&hellip;</span></li>
+      {% endif %}
+    {% endfor %}
+    <li>{% if pg.page < pg.pages %}<a class="page-link" href="{{ page_url(pg.page + 1) }}" rel="next" aria-label="Next page">{{ icon('chevron-right', 16) }}</a>{% else %}<span class="page-link is-disabled" aria-hidden="true">{{ icon('chevron-right', 16) }}</span>{% endif %}</li>
+  </ul>
+  {% endif %}
+</nav>
+{% endif %}
+{% endmacro %}
+
+{# --- Empty state: explains what is missing and what to do next. Use with {% call %} to add buttons. --- #}
+{% macro empty_state(title, message, icon_name='package') %}
+<div class="empty-state">
+  <span class="empty-icon">{{ icon(icon_name, 28) }}</span>
+  <h3>{{ title }}</h3>
+  <p>{{ message }}</p>
+  {% if caller %}<div class="empty-actions">{{ caller() }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro breadcrumbs(items) %}
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <ol>
+    {% for label, href in items %}
+    <li>{% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}<span aria-current="page">{{ label }}</span>{% endif %}</li>
+    {% endfor %}
+  </ol>
+</nav>
+{% endmacro %}

@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}Something went wrong{% endblock %}
+{% block content %}
+<section class="error-page card">
+  <p class="error-code" aria-hidden="true">500</p>
+  <h1>Something went wrong</h1>
+  <p>An unexpected error happened on our side. Nothing you were doing was partly saved. Please try again in a moment.</p>
+  <div class="empty-actions">
+    {% if g.user %}
+    <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Go to dashboard</a>
+    {% else %}
+    <a class="btn btn-primary" href="{{ url_for('login') }}">Go to log in</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

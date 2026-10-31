@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <a class="auth-brand" href="{{ url_for('login') }}">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" width="48" height="48" alt="">
+    <span class="wordmark">Stock<span>Pilot</span></span>
+  </a>
+  <section class="card auth-card" aria-labelledby="login-title">
+    <div>
+      <h1 id="login-title">Log in</h1>
+      <p class="tagline">Know your stock. Control your business.</p>
+    </div>
+
+    {% if errors.form %}
+    <div class="form-error" role="alert">{{ ui.icon('alert', 20) }}<span>{{ errors.form }}</span></div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('login') }}" class="stack">
+      {{ ui.csrf() }}
+      <input type="hidden" name="next" value="{{ next_url }}">
+      {{ ui.field('email', 'Email address', value=form.email, error=errors.email, type='email', autocomplete='email', autofocus=true, maxlength=254) }}
+      {{ ui.field('password', 'Password', value='', error=errors.password, type='password', autocomplete='current-password') }}
+      <button type="submit" class="btn btn-primary btn-block">Log in</button>
+    </form>
+
+    <p class="auth-alt">New to StockPilot? <a href="{{ url_for('register') }}">Create an account</a></p>
+  </section>
+</div>
+{% endblock %}

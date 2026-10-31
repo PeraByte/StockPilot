@@ -1,0 +1,132 @@
+{% extends "layout.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block breadcrumbs %}
+  {{ ui.breadcrumbs([('Products', url_for('products_list')), (product.name, none)]) }}
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <div class="title-row">
+      <h1>{{ product.name }}</h1>
+      {% if product.is_archived %}<span class="badge badge-archived">{{ ui.icon('archive', 14) }}Archived</span>{% else %}{{ ui.stock_badge(metrics.status) }}{% endif %}
+    </div>
+    <p><span class="sku">SKU {{ product.sku }}</span> &middot; {{ product.category }}</p>
+  </div>
+  <div class="actions">
+    {% if product.is_archived %}
+    <form class="inline-form" method="post" action="{{ url_for('product_restore', product_id=product.id) }}">
+      {{ ui.csrf() }}
+      <button type="submit" class="btn btn-primary">{{ ui.icon('restore', 18) }}Restore product</button>
+    </form>
+    {% else %}
+    <a class="btn" href="{{ url_for('product_edit', product_id=product.id) }}">{{ ui.icon('edit', 18) }}Edit</a>
+    <form class="inline-form" method="post" action="{{ url_for('product_archive', product_id=product.id) }}"
+          data-confirm="Archive &ldquo;{{ product.name }}&rdquo;? It will be hidden from sales and lists, but all of its sales and stock history is kept. You can restore it later."
+          data-confirm-title="Archive this product?" data-confirm-label="Archive product">
+      {{ ui.csrf() }}
+      <button type="submit" class="btn">{{ ui.icon('archive', 18) }}Archive</button>
+    </form>
+    {% endif %}
+  </div>
+</header>
+
+<div class="grid-main-side">
+  <div class="stack">
+    <section class="card" aria-labelledby="overview-title">
+      <h2 id="overview-title">Overview</h2>
+      <dl class="detail-grid">
+        <div class="stat">
+          <dt>In stock</dt>
+          <dd>{{ product.quantity }} units
+            <small>Low-stock threshold: {{ product.reorder_level }}</small>
+            {% if not product.is_archived %}{{ ui.stock_meter(product.quantity, product.reorder_level, metrics.status) }}{% endif %}
+          </dd>
+        </div>
+        <div class="stat"><dt>Cost price</dt><dd>{{ product.cost_price | money }}</dd></div>
+        <div class="stat"><dt>Selling price</dt><dd>{{ product.selling_price | money }}</dd></div>
+        <div class="stat">
+          <dt>Estimated profit per unit</dt>
+          <dd>{{ metrics.profit_per_unit | money }}
+            <small>{% if metrics.margin is not none %}{{ metrics.margin }}% of the selling price{% else %}No selling price set{% endif %}</small></dd>
+        </div>
+        <div class="stat"><dt>Stock value (at cost)</dt><dd>{{ metrics.stock_value | money }}<small>Retail value {{ metrics.retail_value | money }}</small></dd></div>
+        <div class="stat"><dt>Sold so far</dt><dd>{{ sold.units }} units<small>{{ sold.revenue | money }} revenue</small></dd></div>
+        <div class="stat"><dt>Last updated</dt><dd>{{ product.updated_at | localdt }}<small>Added {{ product.created_at | localdate }}</small></dd></div>
+      </dl>
+      {% if product.description %}
+      <h3 class="mt-l">Description</h3>
+      <p class="desc muted">{{ product.description }}</p>
+      {% endif %}
+    </section>
+
+    <section class="card" aria-labelledby="moves-title">
+      <div class="card-head">
+        <h2 id="moves-title">Recent stock movements</h2>
+        <a href="{{ url_for('transactions', product_id=product.id) }}">Full history for this product</a>
+      </div>
+      {% if movements %}
+      <div class="table-wrap"><table class="table table-stack">
+        <thead><tr><th scope="col">When</th><th scope="col">Type</th><th scope="col" class="num">Quantity</th><th scope="col" class="num">Stock after</th><th scope="col">Notes</th></tr></thead>
+        <tbody>
+        {% for m in movements %}
+          <tr>
+            <td data-label="When">{{ m.created_at | localdt }}</td>
+            <td data-label="Type">{{ ui.type_badge(m.transaction_type) }}</td>
+            <td class="num" data-label="Quantity">{{ ui.signed_qty(m.transaction_type, m.quantity) }}</td>
+            <td class="num" data-label="Stock after">{{ m.stock_after }}</td>
+            <td data-label="Notes">{% if m.sale_id %}<a href="{{ url_for('receipt', sale_id=m.sale_id) }}">{{ m.receipt_number | receipt_no }}</a>{% else %}{{ m.notes or '-' }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}
+        {% call ui.empty_state('No movements yet', 'Restocks, sales and adjustments for this product will be listed here.', 'history') %}{% endcall %}
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="card" id="stock" aria-labelledby="stock-title">
+    <h2 id="stock-title">Update stock</h2>
+    {% if product.is_archived %}
+      <p class="notice warn">{{ ui.icon('archive', 20) }}<span>This product is archived. Restore it before changing its stock or selling it.</span></p>
+    {% else %}
+    <p class="muted small mt-s">Every change is saved in the stock history with the reason.</p>
+    <form method="post" action="{{ url_for('product_stock', product_id=product.id) }}" class="stack mt-m" data-stock-form>
+      {{ ui.csrf() }}
+      {% if stock_errors.action %}<p class="error-text" role="alert">{{ ui.icon('alert', 16) }}<span>{{ stock_errors.action }}</span></p>{% endif %}
+      <fieldset class="segmented">
+        <legend>Type of stock change</legend>
+        <label><input type="radio" name="action" value="restock" {{ 'checked' if stock_form.action in (none, '', 'restock') }}>Restock</label>
+        <label><input type="radio" name="action" value="adjust_in" {{ 'checked' if stock_form.action == 'adjust_in' }}>Add stock</label>
+        <label><input type="radio" name="action" value="adjust_out" {{ 'checked' if stock_form.action == 'adjust_out' }}>Remove stock</label>
+      </fieldset>
+      <p class="hint" id="action-hint">Restock records stock received from a supplier. Add or remove stock for corrections such as a recount, damage or a return; those need a reason.</p>
+
+      {{ ui.field('quantity', 'Quantity', value=stock_form.quantity or '', error=stock_errors.quantity, inputmode='numeric', pattern='[0-9]+', id='stock-quantity') }}
+
+      <div id="restock-fields" class="stack">
+        {{ ui.field('unit_cost', 'Cost per unit for this delivery', value=stock_form.unit_cost or '', error=stock_errors.unit_cost, inputmode='decimal', optional=true,
+                    pattern='[0-9,]+([.][0-9]{1,2})?', id='stock-unit-cost', hint='Leave blank to use the current cost price (' ~ (product.cost_price | money) ~ ').') }}
+        <label class="check"><input type="checkbox" name="update_cost" {{ 'checked' if stock_form.update_cost == 'on' }}><span>Also set this as the product's cost price</span></label>
+      </div>
+
+      <div class="field{% if stock_errors.notes %} has-error{% endif %}">
+        <label for="stock-notes"><span id="notes-label">Reason or note</span> <span class="optional" id="notes-optional">(optional for a restock)</span></label>
+        <input class="control" id="stock-notes" name="notes" type="text" maxlength="200" value="{{ stock_form.notes or '' }}"
+               {%- if stock_errors.notes %} aria-invalid="true" aria-describedby="stock-notes-error"{% endif %}>
+        {% if stock_errors.notes %}<p class="error-text" id="stock-notes-error">{{ ui.icon('alert', 16) }}<span>{{ stock_errors.notes }}</span></p>{% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary">{{ ui.icon('check', 18) }}Record stock change</button>
+    </form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/products.js') }}" defer></script>
+{% endblock %}
